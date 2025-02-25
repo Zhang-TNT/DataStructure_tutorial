@@ -699,3 +699,434 @@
 
     释放指针`p`所指向的动态空间，无返回值。
 
+以上函数的声明在`stdlib.h`头文件中，结果是获得动态存储区的起始地址。`void`指针类型为“指向空类型”，在赋值时应注意**类型转换**。要注意的是在分配到存储区后，得到的是该区域第一个字节的地址，要使用该区域就必须使用指针。案例如下
+
+### 2.5 内存中的栈和堆
+
+1. 栈
+2. 堆
+
+### 2.6 建立数据类型
+
+1. 结构体
+2. 共用体
+3. 枚举类型
+
+## DataStructure & Algorithm
+
+> 数据结构包括**逻辑结构（抽象关系）**、**存储结构**和**数据运算**，对数据类型进行抽象，**抽象数据类型**（Abstract Data Type, ADT）包括三部分：数据对象、数据关系和基本操作。
+
+### 3.1 算法
+
+**算法**是为了解决问题而规定的一个有限长的操作序列。一个算法必须满足以下五个特性
+
++ **有穷性**：有穷步骤
++ **确定性**：每种情况都有确定的结果
++ **可行性**：每一步骤可行
++ **输入**：有零个或多个输入
++ **输出**：有一个或多个输出
+
+算法优劣的评价标准
+
++ 正确性：在合理的数据输入下，能在有限的运行时间内得到正确结果
++ 可读性：便于理解
++ 健壮性：当输入数据非法时，能做出正确反应
++ 高效性：包括时间和空间两方面，执行效率高和占用存储容量合理
+
+一个程序的运行时间，依赖于算法的好坏和问题的输入规模。算法效率的度量方法主要有两类，事后统计法和事前分析估算法，通常采用**事前分析估算法**。
+
+一条语句的重复执行次数称作**语句频度**（Frequency Count）。案例如下
+
+```c
+for(int i = 1; i <= n; i++)						// 频度为n+1
+{
+    for(int j = 1; j <= n; j++)					// 频度为n*(n+1)
+    {
+        c[i][j] = 0;						  // 频度为n^2
+        for(int k = 1; k <= n; k++)				// 频度为n^2*(n+1)
+            c[i][j] = c[i][j] + a[i][k] * b[k][j];	// 频度为n^3
+    }
+}
+```
+
+该算法中所有语句频度之和$T(n)$是结束$n$的函数，用$f(n)$表示，也就是算法的执行时间与$f(n)$成正比。
+
+1. 算法的时间复杂度定义
+
+    用"O"表示数量级，则上述算法可记作$T(n) = O(f(n))=O(n^3)$，表示随问题规模$n$的增大，算法执行时间的增长率和$f(n)$的增长率相同，称作算法的**渐近时间复杂度**，简称**时间复杂度**。
+
+2. 算法的空间复杂度定义
+
+    空间复杂度$S(n)$定义为该算法所消耗的存储空间，记作$S(n)=O(g(n))$，一般指所占用临时的工作单元数有关。
+
+算法的时间复杂度和空间复杂度是相互影响的，通常假设运算空间充足，以时间复杂度作为算法优劣的衡量标准。
+
+### 3.2 线性表
+
+由有限个数据特性相同的元素构成的序列称为**线性表**，一般表示为$L = (a_1,a_2,...,a_n)$。对于非空的线性表或线性结构，有以下特点
+
++ 存在唯一一个“第一个”数据元素$a_1$，表头元素
++ 存在唯一一个“最后一个”数据元素$a_n$，表尾元素
++ 出第一个外，结构中的每个元素均只有一个前驱
++ 除最后一个外，结构中的每个元素均只有一个后继
+
+![image-20250225205124061](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250225205124061.png)
+
+对线性表进行数据类型抽象：
+
+```c
+ADT List{
+    数据对象：D = {ai|ai belong to ElemSet}
+    数据关系：R = {<ai-1, ai>|ai-1}
+    基本操作：
+        InitList(&L)：初始化，构造一个空的线性表
+        LengthList(L)：求表长，返回线性表L的长度
+        LocateElem(L, e)：按值查找，在L中查找值为e的元素
+        GetElem(L, i)：按位查找，在L中查找第i位的元素
+ 	    ListInsert(&L, i, e)：插入操作，在i位插入元素e
+ 	    ListDelete(&L, i, &e)：删除操作，e返回删除元素的值
+ 	    PrintList(L)：输出操作，顺序打印表L元素
+ 	    EmptyList(L)：判空操作
+ 	    DestroyList(&L)：销毁操作，销毁线性表并释放L的内存空间
+ 	    ClearList(&L)：清空操作
+}
+```
+
+#### 3.2.1 线性表的顺序表示和实现
+
+线性表的顺序表示是**用一段地址连续的存储单元**依次存储线性表的数据元素（顺序表索引从1开始），这种表示称作线性表的顺序存储结构或顺序映像，逻辑位序和物理位序均相差1，称这种存储结构的线性表为**顺序表**。示意图如下
+
+![image-20250225205636641](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250225205636641.png)
+
+线性表的每个数据元素的类型都相同，即可用C语言中的一维数组来实现顺序存储结构，有两种方式
+
+```c
+// 静态分配
+#define MAXSIZE 100
+typedef int ElemType;
+typedef struct _SqList_static	// 顺序表存储结构
+{
+    ElemType elem[MAXSIZE];
+    int length;
+}SqList_static;
+// 动态分配，主要用于有指针操作的语言
+#define MAXSIZE 100
+typedef int ElemType;
+typedef struct _SqList_dynamic
+{
+    ElemType *elem;
+    int length;
+}SqList_dynamic;
+SqList_dynamic L;
+L.elem = (ElemType *)malloc(sizeof(ElemType) * MAXSIZE);
+```
+
+假设线性表中每个元素占用$l$个存储单元，那么线性表中第$i+1$个元素的存储位置$LOC(a_{i+1})$和第$i$个元素的存储位置$LOC(a_i)$之间满足关系$LOC(a_{i+1})=LOC(a_i)+l$，一般来说线性表的第$i$个元素$a_i$的存储位置为$LOC(a_i)=LOC(a_1)+(i-1)l$，其中$LOC(a_1)$是线性表的**起始位置**或**基地址**。顺序表内相邻元素有相邻的存储位置，**物理位置相邻**，顺序存储结构是一种随机存取的存储结构。
+
+1. 初始化
+
+    构造一个空的顺序表：为L动态分配一个预定义大小的数组空间，使`elem`指向这段空间的基地址；将表的当前长度设为0。
+
+    + 为顺序表$L$分配数组空间（静态和动态），使数据$elem$指向该段空间的基地址
+    + 将表的当前长度设为0
+
+    静态分配适合于没有指针操作的语言，实现代码如下
+
+    ```c
+    SqList_static sqlist1;	// 顺序表
+    sqlist1.length = 0;		// 初始化长度
+    sqlist1.elem[0] = 1;
+    sqlist1.elem[1] = 2;
+    sqlist1.elem[2] = 3;
+    sqlist1.elem[3] = 4;
+    sqlist1.length = 4;		// 存储玩数据
+    ```
+
+    动态分配适合有指针操作的语言，实现代码如下
+
+    ```c
+    Status SqList_dynamic_Init(SqList_dynamic *L)
+    {
+        L->elem = (ElemType *)malloc(sizeof(ElemType) * SQLIST_MAXSIZE);
+        if (L->elem == NULL)
+            return STATUS_ERROR;
+        L->length = 0;
+        return STATUS_OK;
+    }
+    ```
+
+    
+
+2. 取值
+
+    取值操作是根据指定位置序号$i$，获取顺序表中的第$i$个数据元素的值，将其存在参数$e$中，并返回`STATUS_OK`；位置序号不合理，则返回`STATUS_INFEASIBLE`。
+
+    + 判断指定位置$i$是否合法，非法则返回`STATUS_INFEASIBLE`
+    + 将第$i$个位置数据元素值`L.elem[i-1]`赋给参数`e`
+
+    静态分配实现代码如下
+
+    ```c
+    int SqList_static_GetElem(SqList_static L, int i)
+    {
+        if (i < 1 || i > L.length)
+            return STATUS_ERROR;
+        int e = L.elem[i - 1];
+        return e;
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    Status SqList_dynamic_GetElem(SqList_dynamic L, int i, ElemType *e)
+    {
+        if (i < 1 || i > L.length)
+            return STATUS_ERROR;
+        *e = L.elem[i - 1];
+        return STATUS_OK;
+    }
+    ```
+
+    
+
+3. 查找
+
+    查找操作是根据指定的元素值$e$，查找顺序表中第1个与$e$相等的元素，查找成功则返回位置序号；查找失败则返回0。
+
+    + 从第一个元素起，依次比较`L.elem[i]`和`e`，相匹配则返回序号`i+1`
+    + 查找失败则返回0
+
+    静态分配实现代码如下
+
+    ```c
+    int SqList_static_LocateElem(SqList_static L, ElemType e)
+    {
+        for (int i = 0; i < L.length; i++)
+        {
+            if (L.elem[i] == e)
+                return i + 1;
+        }
+        return 0;
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    int SqList_dynamic_LocateElem(SqList_dynamic L, ElemType e)
+    {
+        for (int i = 0; i < L.length; i++)
+        {
+            if (L.elem[i] == e)
+                return i + 1;
+        }
+        return 0;
+    }
+    ```
+
+    
+
+4. 插入
+
+    插入操作是在表的$i$个位置插入一个新的数据元素$e$，使长度为$n$的线性表变为长度为$n+1$的线性表，数据元素$a_i$及其后续数据元素均向后移动一位，在算法上需要从最后一个元素即第$n$个元素开始依次向后移动一个位置，直至第$i$个元素，共移动$(n-i+1)$个数据元素。
+
+    + 判断插入位置$i$是否合法，非法则返回`STATUS_INFEASIBLE`
+    + 判断顺序表存储空间是否充足，不够则返回`STATUS_OVERFLOW`
+    + 将第$n$个至第$i$个位置的元素依次向后移动一位，空出第$i$个位置
+    + 将要插入的元素$e$放入第$i$个位置
+    + 表长加1
+
+    静态分配实现代码如下
+
+    ```c
+    Status SqList_static_Insert(SqList_static *L, int i, ElemType e)
+    {
+        if (i < 1 || i > L->length + 1)
+            return STATUS_ERROR;
+        if (L->length == SQLIST_MAXSIZE)
+            return STATUS_ERROR;
+        for (int j = L->length - 1; j >= i - 1; j--)
+        {
+            L->elem[j + 1] = L->elem[j];
+        }
+        L->elem[i - 1] = e;
+        L->length++;
+        return STATUS_OK;
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    Status SqList_dynamic_Insert(SqList_dynamic *L, int i, ElemType e)
+    {
+        if (i < 1 || i > L->length + 1)
+            return STATUS_ERROR;
+        if (L->length == SQLIST_MAXSIZE)
+            return STATUS_ERROR;
+        for (int j = L->length - 1; j >= i - 1; j--)
+        {
+            L->elem[j + 1] = L->elem[j];
+        }
+        L->elem[i - 1] = e;
+        L->length++;
+        return STATUS_OK;
+    }
+    ```
+
+    顺序表在进行数据元素的插入时，时间主要耗费在元素的移动上，移动元素的个数取决于插入元素的位置。
+
+5. 删除
+
+    删除操作是将表中的第$i$个元素删除，将长度为$n$的线性表变为长度为$n-1$的线性表，数据元素$a_i$其后续数据元素均向前移动一位，在算法上需要从第$i+1$个元素开始依次向前移动一个位置，直至第$n$个元素，共移动$(n-i)$个元素。
+
+    + 判断删除位置$i$是否合法，非法则返回`STATUS_INFEASIBLE`
+    + 将第$i+1$个至第$n$个位置的元素依次向前移动一个位置
+    + 表长减1
+
+    静态分配实现代码如下
+
+    ```c
+    Status SqList_static_Delete(SqList_static *L, int i)
+    {
+        if (i < 1 || i > L->length)
+            return STATUS_ERROR;
+        for (int j = i - 1; j < L->length - 1; j++)
+        {
+            L->elem[j] = L->elem[j + 1];
+        }
+        L->length--;
+        return STATUS_OK;
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    Status SqList_dynamic_Delete(SqList_dynamic *L, int i)
+    {
+        if (i < 1 || i > L->length)
+            return STATUS_ERROR;
+        for (int j = i - 1; j < L->length - 1; j++)
+        {
+            L->elem[j] = L->elem[j + 1];
+        }
+        L->length--;
+        return STATUS_OK;
+    }
+    ```
+
+    
+
+6. 打印
+
+    打印操作是将表中的数据元素依次打印。
+
+    + 判断表长度是否非空
+    + 遍历打印数据元素
+
+    静态分配实现代码如下
+
+    ```c
+    void SqList_static_Print(SqList_static L)
+    {
+        if (L.length == 0)
+            printf("[]\n");
+        for (int i = 0; i < L.length; i++)
+        {
+            printf("L.elem[%d] = %d\n", i, L.elem[i]);
+        }
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    void SqList_dynamic_Print(SqList_dynamic L)
+    {
+        if (L.length == 0)
+            printf("[]\n");
+        for (int i = 0; i < L.length; i++)
+        {
+            printf("L.elem[%d] = %d\n", i, L.elem[i]);
+        }
+    }
+    ```
+
+    
+
+7. 获取表长度
+
+    返回表长度
+
+    静态分配实现代码如下
+
+    ```c
+    int SqList_static_Length(SqList_static L)
+    {
+        return L.length;
+    }
+    ```
+
+    动态分配实现代码如下
+
+    ```c
+    void SqList_dynamic_Print(SqList_dynamic L)
+    {
+        if (L.length == 0)
+            printf("[]\n");
+        for (int i = 0; i < L.length; i++)
+        {
+            printf("L.elem[%d] = %d\n", i, L.elem[i]);
+        }
+    }
+    ```
+
+    
+
+#### 3.2.2 线性表的链式表示和实现
+
+线性表的链式表示是**用一组任意的存储单元存储线性表的数据元素**。为表示每个数据元素$a_i$，除了存储其本身的信息之外，还需要存储一个指示其后续的信息，这两部分信息组成数据元素$a_i$的存储映像，称为**结点**，每个结点包括两个域：数据域和指针域。$n$个结点链接成一个链表，即为线性表的链式存储结构。数据元素间的逻辑关系是由结点中的指针指示的，这种存储结构为非顺序映像或链式映像。
+
+根据链表结点所含指针个数、指针指向和指针连接方式，可将链表分为单链表、循环链表、双向链表、二叉链表、十字链表、邻接表、邻接多重表等，其中单链表、循环链表、双向链表用于实现线性表的链式存储结构，其他形式多用于实现树和图等非线性结构。下图所示为线性表的单链表存储结构，**整个链表的存取必须从头指针开始进行**，头指针为链表中的第一个结点（基地址），最后一个结点指针为空。
+
+![image-20250225221806339](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250225221806339.png)
+
+通常将链表化成使用箭头相链接的结点序列，结点之间的箭头表示指针域中的指针，只需要表示线性表中数据元素之间的逻辑顺序即可，**单链表可由头指针唯一确定**。C语言中使用“结构指针”来描述
+
+```c
+// 单链表存储结构
+typedef struct _LNode
+{
+    int data;
+    struct _LNode *next;
+}LNode;
+```
+
+这里对首元结点、头结点和头指针三个概念加以说明
+
++ 首元结点：链表中存储第一个数据元素的结点
++ 头结点：首元结点前附设的一个结点，数据域不存储信息（或存储与数据元素类型相同的附加信息），指针域指向首元结点；头结点作用：便于首元结点处理、便于空表和非空表的统一处理
++ 头指针：指向链表中第一个结点的指针，若没有头结点时指向首元结点，是链表必要元素
+
+注：引入头结点后，头指针的指向始终为头结点，虽然会占用内存；未引入头结点，头指针的指向会发生改变。
+
+1. 初始化
+
+    构建一个空的单链表，生成新结点，将读取到的数据存放到新结点数据域中，再将新结点插入到当前链表的表头。
+
+    + 生成新结点作为头结点，用头指针指向头结点
+    + 头结点指针域置空
+
+2. 取值
+
+3. 查找
+
+4. 插入
+
+5. 删除
+
+6. 打印
+
+7. 获取长度
