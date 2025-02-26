@@ -51,5 +51,11 @@ Status SqList_dynamic_Delete(SqList_dynamic *L, int i);
 void SqList_dynamic_Print(SqList_dynamic L);
 
 Status LinkList_Init(LinkList *L);
+int LinkList_Length(LinkList L);
+Status LinkList_GetElem(LinkList L, int i, ElemType *e);
+int LinkList_LocateElem(LinkList L, ElemType e);
+Status LinkList_Insert(LinkList *L, int i, ElemType e);
+Status LinkList_Delete(LinkList L, int i);
+void LinkList_Print(LinkList L);
 
 #endif

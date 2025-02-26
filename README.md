@@ -1106,6 +1106,8 @@ typedef struct _LNode
 
 这里对首元结点、头结点和头指针三个概念加以说明
 
+![image-20250226195914911](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250226195914911.png)
+
 + 首元结点：链表中存储第一个数据元素的结点
 + 头结点：首元结点前附设的一个结点，数据域不存储信息（或存储与数据元素类型相同的附加信息），指针域指向首元结点；头结点作用：便于首元结点处理、便于空表和非空表的统一处理
 + 头指针：指向链表中第一个结点的指针，若没有头结点时指向首元结点，是链表必要元素
@@ -1114,19 +1116,309 @@ typedef struct _LNode
 
 1. 初始化
 
-    构建一个空的单链表，生成新结点，将读取到的数据存放到新结点数据域中，再将新结点插入到当前链表的表头。
+    构建一个指向头指针的指针，即一个二重指针，生成一个新结点，二重指针指向该结点（头结点），头结点指针域为NULL。
 
-    + 生成新结点作为头结点，用头指针指向头结点
+    + 生成新结点作为头结点，由头指针指向该结点
     + 头结点指针域置空
+
+    带头节点代码实现如下
+
+    ```c
+    // 初始化参数必须是指针，即指向头指针的指针
+    Status LinkList_Init(LinkList *L)
+    {
+        *L = (LNode *)malloc(sizeof(LNode));	// 头指针指向头节点
+        if (*L == NULL)
+            return STATUS_ERROR;
+        (*L)->next = NULL;	// 头节点指针域为NULL
+        return STATUS_OK;
+    }
+    ```
+
+    不带头节点代码实现如下
+
+    ```c
+    ```
+
+    
 
 2. 取值
 
+    取值操作只能从链表的首元结点出发，顺着链域`next`逐个结点向下访问。
+
+    + 用指针`p`指向首元结点，用`j`做计数器
+    + 从首元结点开始依次顺着链域`next`向下访问，只要当前结点指针`p`不为空，且没有到达序号`i`的结点，循环执行：`p`指向下一个结点，计数器`j`加1
+    + 退出循环时，如果指针`p`为空或`j`大于`i`时，说明指定的序号`i`不合法；否则取值成功，有`j=i`，`p`所指的结点即为要找的`i`号数据元素，用参数`e`保存数据
+
+    带头结点代码实现如下
+
+    ```c
+    Status LinkList_GetElem(LinkList L, int i, ElemType *e)
+    {
+        LNode *pTemp = L->next;	// 指向首元结点
+        int j = 1;
+        while (pTemp != NULL && j < i)
+        {
+            pTemp = pTemp->next;
+            j++;
+        }
+        if (pTemp == NULL || j > i)
+            return STATUS_ERROR;
+        *e = pTemp->data;
+        return STATUS_OK;
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+    
+
 3. 查找
+
+    查找操作是从链表首元结点出发，依次将结点值与给定值$e$进行比较，返回目标结点地址。
+
+    + 用指针指向首元结点
+    + 从首元结点出发顺着链域向下查找，当前结点$p$指针域不为空且数据域不等于给定值$e$执行循环操作：$p$指向下一个结点
+    + 查找成功则返回$p$，失败则返回`STATUS_ERROR`
+
+    带头结点代码实现如下
+
+    ```c
+    int LinkList_LocateElem(LinkList L, ElemType e)
+    {
+        LNode *pTemp = L->next;
+        int i = 1;
+        while (pTemp != NULL)
+        {
+            if (pTemp->data == e)
+                return i;
+            pTemp = pTemp->next;
+            i++;
+        }
+        return 0;
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+    
 
 4. 插入
 
+    插入操作是在表的第$i$个位置插入一个值为$e$的新结点$s$，插入到$a_{i-1}$到$a_i$之间。
+
+    + 查找结点$a_{i-1}$
+    + 创建新结点$s$，数据域为$e$，指针域为$a_i$
+    + 将结点$a_{i-1}$的指针域更改为结点$s$
+
+    带头结点代码实现如下
+
+    ```c
+    Status LinkList_Insert(LinkList *L, int i, ElemType e)
+    {
+        if (i < 1)
+            return STATUS_ERROR;
+    
+        LNode *pTemp = (*L); // pTemp指向头结点
+        int j = 0;
+        while (pTemp != NULL && j < i - 1)
+        {
+            pTemp = pTemp->next;
+            j++;
+        }
+        if (pTemp == NULL || j > i - 1)
+            return STATUS_ERROR;
+        LNode *pNode = (LNode *)malloc(sizeof(LNode));
+        if (pNode == NULL)
+            return STATUS_ERROR;
+        pNode->data = e;
+        pNode->next = pTemp->next;
+        pTemp->next = pNode;
+        return STATUS_OK;
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+    
+
 5. 删除
+
+    删除操作是将链表中的第$i$个位置的结点$p$删除，首先找到其前驱结点$o$，然后修改$o$的指针域即可。
+
+    + 查找结点$a_{i-1}$，由指针$p$指向该结点
+    + 临时保存结点$a_i$的地址在$q$中
+    + 将结点$*p$的指针域指向$a_i$的后继结点
+    + 释放结点$a_i$的空间
+
+    带头结点代码实现如下
+
+    ```c
+    Status LinkList_Delete(LinkList L, int i)
+    {
+        LNode *pTemp = L->next; // pTemp指向首元结点
+        int j = 1;
+        while (pTemp != NULL && j < i - 1)
+        {
+            pTemp = pTemp->next;
+            j++;
+        }
+        if (pTemp == NULL || j > i - 1)
+            return STATUS_ERROR;
+        LNode *pNode = pTemp->next;
+        if (pNode == NULL)
+            return STATUS_ERROR;
+        pTemp->next = pNode->next;
+        free(pNode);
+        return STATUS_OK;
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+    
 
 6. 打印
 
+    打印链表数据域操作是从链表头指针$phead$出发，顺着链域向下遍历，在链域不为`NULL`条件下打印数据域。
+
+    + 新建结点指向首元结点
+    + 顺着首元结点向下检索直到尾节点
+
+    带头结点代码实现如下
+
+    ```c
+    void LinkList_Print(LinkList L)
+    {
+        LNode *pTemp = L->next; // pTemp指向首元结点
+        int i = 0;
+        if (pTemp == NULL)
+            printf("[]\n");
+        else
+        {
+            while (pTemp != NULL)
+            {
+                printf("L.elem[%d] = %d\n", i + 1, pTemp->data);
+                pTemp = pTemp->next;
+                i++;
+            }
+        }
+        printf("\n");
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+    
+
 7. 获取长度
+
+    求链表长度操作是从链表的头指针$phead$出发，设置计数器，顺着链域向下寻找，在链域不为`NULL`前提下进行计数，直至遇到`NULL`计数结束，即为链表长度。
+
+    + 新建结点指向首元结点
+    + 新建计数器从零开始计数
+    + 顺着首元结点向下检索，结点指针域不为NULL则计数器加1，直到尾节点
+
+    带头结点代码实现如下
+
+    ```c
+    int LinkList_Length(LinkList L)
+    {
+        int len = 0;
+        LNode *pTemp = L->next; // pTemp指向首元结点
+        while (pTemp != NULL)
+        {
+            len++;
+            pTemp = pTemp->next;
+        }
+        return len;
+    }
+    ```
+
+    不带头结点代码实现如下
+
+    ```c
+    ```
+
+#### 3.2.3 顺序表和链表比较
+
++ 空间性能
+
+    顺序表必须预先分配空间，已造成存储空间浪费或空间溢出；链表不需预先分配空间，元素个数没有限制。
+
+    由于链表每个结点还要额外设置指针域，从存储密度上讲是不经济的。
+
++ 时间性能
+
+    顺序表是一种随机存取结构，存取元素时间复杂度为$O(1)$；链表存取元素必须检索全链表，存取元素时间复杂度为$O(n)$。
+
+#### 3.2.4 其他链表
+
+对于单链表，结点中的指针域只存储了向后的指针，不能满足一些复杂问题，因此提出以下链表。
+
++ 循环链表
+
+    将单链表中终端尾节点指针由NULL改为指向头节点，就使得整个单链表形成一个换，这种头尾相接的单链表称为**单循环链表**。示意图如下
+
+    ![image-20250226212555556](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250226212555556.png)
+
++ 双向链表
+
+    双向链表就是在单链表的每个结点中，在设置一个指向其前驱结点的指针域，使得链表可以双向检索。
+
+    ![image-20250226212848349](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250226212848349.png)
+
+#### 3.2.5 线性表的应用
+
+线性表是其他数据结构的基础，因此应用非常广泛。
+
+### 3.3 栈与队列
+
+#### 3.3.1 栈
+
+1. 定义
+
+    栈（stack）是限定**仅在表尾进行插入或删除操作的线性表**。表尾称为**栈顶**，表头称为**栈底**；栈是自动管理的内存区域，系统进行自动分配和释放内存，采取先进后出**（FILO）**的原则，连续存储数据。栈的示意图如下所示
+
+    ![image-20250226214033219](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250226214033219.png)
+
+2. 栈的抽象数据类型
+
+3. 表示和实现
+
+
+
+
+
+#### 3.3.2 队列
+
+1. 定义
+
+    队列（queue）是一种先进先出（FIFO）的线性表，**限定仅在表的一端进行插入元素，而在另一端删除元素**，允许插入的一端称为**队尾**，允许删除的一端称为**队头**。队列的示意图如下所示
+
+2. 队列的抽象数据类型
+
+3. 表示和实现
+
+#### 3.3.3 栈与队列的应用
+
+1. 栈
+
+    在软件应用中，如浏览器网页的后退键，能返回之前所浏览的网页；还有编辑软件这撤销功能，可撤销上次操作。这些功能的实现都是通过**栈**这种数据结构实现。
+
+2. 队列
