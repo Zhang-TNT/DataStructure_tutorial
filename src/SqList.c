@@ -1,5 +1,6 @@
 #include "SqList.h"
 
+/* funcs for static sequence list*/
 int SqList_static_Length(SqList_static L)
 {
     return L.length;
@@ -60,6 +61,7 @@ void SqList_static_Print(SqList_static L)
     }
 }
 
+/* funcs for dynamic sequence list*/
 Status SqList_dynamic_Init(SqList_dynamic *L)
 {
     L->elem = (ElemType *)malloc(sizeof(ElemType) * SQLIST_MAXSIZE);

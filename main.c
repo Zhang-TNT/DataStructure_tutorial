@@ -1,6 +1,7 @@
 #include <stdio.h>
-#include "SqList.h"
+// #include "SqList.h"
 // #include "FuncDemo.h"
+#include "Stack.h"
 
 int main()
 {
@@ -51,7 +52,7 @@ int main()
     // SqList_dynamic_Print(sqlist2);
 
     /* Link list*/
-    printf("Link list\n");
+    /*printf("Link list\n");
     LinkList aLinkList;
     LinkList_Init(&aLinkList);
     LinkList_Print(aLinkList);
@@ -70,6 +71,28 @@ int main()
     printf("e located at %d\n", LinkList_LocateElem(aLinkList, 5));
     int temp = 0;
     LinkList_GetElem(aLinkList, 3, &temp);
+    printf("temp = %d\n", temp);*/
+
+    /* Stack */
+    printf("Stack\n");
+    SqStack aStack;
+    Stack_Init(&aStack);
+    int alength = Stack_Length(aStack);
+    printf("alength = %d\n", alength);
+    Stack_Push(&aStack, 1);
+    Stack_Push(&aStack, 2);
+    Stack_Push(&aStack, 3);
+    Stack_Push(&aStack, 4);
+    alength = Stack_Length(aStack);
+    printf("alength = %d\n", alength);
+    Stack_Print(aStack);
+    int temp = 0;
+    Stack_Pop(&aStack, &temp);
     printf("temp = %d\n", temp);
+    Stack_Print(aStack);
+    Stack_GetTop(aStack, &temp);
+    printf("temp = %d\n", temp);
+    Stack_Clear(&aStack);
+    Stack_Print(aStack);
     return 0;
 }

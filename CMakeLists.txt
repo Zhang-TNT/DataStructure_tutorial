@@ -11,7 +11,8 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(SRC_FILES
     ${PROJECT_SOURCE_DIR}/main.c
     ${PROJECT_SOURCE_DIR}/src/SqList.c
-    ${PROJECT_SOURCE_DIR}/src/FuncDemo.c)
+    ${PROJECT_SOURCE_DIR}/src/FuncDemo.c
+    ${PROJECT_SOURCE_DIR}/src/Stack.c)
 
 
 # aux_source_directory(. DIR_SRCS)
