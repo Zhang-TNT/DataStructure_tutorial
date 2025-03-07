@@ -1425,8 +1425,12 @@ typedef struct _LNode
 
     + 顺序栈
 
-        顺序栈可表示如下
+        栈普通情况、空栈和栈满的情况示意图可表示如下
 
+        ![image-20250307201400792](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250307201400792.png)
+    
+        顺序栈可表示如下
+    
         ```c
         /* sequence Stack structure static */
         typedef struct _SqStack
@@ -1442,45 +1446,38 @@ typedef struct _LNode
             int top;
         } SqStack_dynamic;
         
-        /* sharing sequence Stack structure */
-        typedef struct _SqStack_shared
-        {// 共享栈使用同一段内存空间，一个栈的栈底为数组始端“0”处，另一个栈的栈底为数组末端“n-1”处，两栈向中间靠拢。栈1为空时，top1=-1；栈2为空时，top2=n。两者栈顶相差1时，为栈满。
-            ElemType elem[STACK_MAXSIZE];
-            int top1;
-            int top2;
-        } _SqStack_shared;
         ```
-
+    
         + 初始化
-
+    
             顺序栈的初始化操作就是为顺序栈分配一块内存空间，将栈置为空。
-
+    
             ```c
             void Stack_Init(SqStack *S)
             {
                 S->top = -1; // 初始化栈为空
             }
             ```
-
+    
             
-
+    
         + 清空栈
-
+    
             顺序栈的清空操作就是将栈置为空，丢弃所存储的数据。
-
+    
             ```c
             void Stack_Clear(SqStack *S)
             {
                 S->top = -1; // 清空栈
             }
             ```
-
+    
             
-
+    
         + 压栈
-
+    
             顺序栈的压栈操作就是在栈顶插入一个新的元素
-
+    
             ```c
             Status Stack_Push(SqStack *S, ElemType e)
             {
@@ -1492,13 +1489,15 @@ typedef struct _LNode
                 return STATUS_OK;
             }
             ```
-
-            
-
+    
+            压栈操作可视化表示如下
+    
+            ![image-20250307201820165](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250307201820165.png)
+    
         + 弹栈
-
+    
             顺序栈的弹栈操作就是删除栈顶元素
-
+    
             ```c
             Status Stack_Pop(SqStack *S, ElemType *e)
             {
@@ -1509,13 +1508,13 @@ typedef struct _LNode
                 return STATUS_OK;
             }
             ```
-
+    
             
-
+    
         + 获取栈顶元素
-
+    
             顺序栈的获取栈顶元素操作
-
+    
             ```c
             Status Stack_GetTop(SqStack S, ElemType *e)
             {
@@ -1525,26 +1524,26 @@ typedef struct _LNode
                 return STATUS_OK;
             }
             ```
-
+    
             
-
+    
         + 栈长度
-
+    
             顺序栈的长度
-
+    
             ```c
             int Stack_Length(SqStack S)
             {
                 return S.top + 1;
             }
             ```
-
+    
             
-
+    
         + 栈遍历打印
-
+    
             顺序栈的遍历打印
-
+    
             ```c
             void Stack_Print(SqStack S)
             {
@@ -1555,12 +1554,82 @@ typedef struct _LNode
                 printf("\n");
             }
             ```
-
+    
+        + 共享栈
+    
+            共享栈使用同一段内存空间，一个栈的栈底为数组始端“0”处，另一个栈的栈底为数组末端“n-1”处，两栈向中间靠拢。共享栈可视化如下
+    
+            ![image-20250307202050989](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250307202050989.png)
+    
+            两栈共享空间结构代码实现如下
+    
+            ```c
+            /* sharing sequence Stack structure */
+            typedef struct _SqStack_shared
+            {
+                ElemType elem[STACK_MAXSIZE];
+                int top1;
+                int top2;
+            } _SqStack_shared;
             
-
+            Status SharingStack_Push(SqStack_shared *S, ElemType e, int stackNum)
+            {
+                if (S->top1 + 1 == S->top2) // 栈满
+                    return STATUS_ERROR;
+                if (stackNum == 1) // 栈1
+                    S->elem[++S->top1] = e;
+                else if (stackNum == 2) // 栈2
+                    S->elem[--S->top2] = e;
+                return STATUS_OK;
+            }
+            
+            Status SharingStack_Pop(SqStack_shared *S, ElemType *e, int stackNum)
+            {
+                if (stackNum == 1) // 栈1
+                {
+                    if (S->top1 == -1)
+                        return STATUS_ERROR;
+                    *e = S->elem[S->top1--];
+                }
+                else if (stackNum == 2) // 栈2
+                {
+                    if (S->top2 == STACK_MAXSIZE)
+                        return STATUS_ERROR;
+                    *e = S->elem[S->top2++];
+                }
+                return STATUS_OK;
+            }
+            ```
+    
+            栈1为空时，top1=-1；栈2为空时，top2=n。两者栈顶相差1时，为栈满。两个栈的压栈和弹栈操作恰好相反。
+    
     + 链式栈
-
-        链式栈可表示如下
+    
+        由于单链表有头指针，栈只是栈顶来做插入和删除操作，将栈顶放在链表的头部，栈底即为链表的尾部；链式栈基本不存在栈满的情况，链栈的结构代码表示如下
+        
+        ```c
+        /* 链式栈结构如下 */
+        typedef struct _StackNode
+        {
+            ElemType data;
+            struct _StackNode *next;
+        }StackNode, *LinkStackPtr;
+        
+        typedef struct _LinkStack
+        {
+            LinkStackPtr top;		// 栈顶
+            int count;				// 栈中元素的个数
+        }LinkStack;
+        
+        /* 另一种链式栈结构 */
+        typedef struct _StackNode
+        {
+            ElemType data;
+            struct _StackNode *next;
+        }StackNode, *LinkStack;
+        ```
+        
+        
 
 #### 3.3.2 栈的应用
 

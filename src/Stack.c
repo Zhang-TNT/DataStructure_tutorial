@@ -50,3 +50,31 @@ void Stack_Print(SqStack S)
     }
     printf("\n");
 }
+
+Status SharingStack_Push(SqStack_shared *S, ElemType e, int stackNum)
+{
+    if (S->top1 + 1 == S->top2) // 栈满
+        return STATUS_ERROR;
+    if (stackNum == 1) // 栈1
+        S->elem[++S->top1] = e;
+    else if (stackNum == 2) // 栈2
+        S->elem[--S->top2] = e;
+    return STATUS_OK;
+}
+
+Status SharingStack_Pop(SqStack_shared *S, ElemType *e, int stackNum)
+{
+    if (stackNum == 1) // 栈1
+    {
+        if (S->top1 == -1)
+            return STATUS_ERROR;
+        *e = S->elem[S->top1--];
+    }
+    else if (stackNum == 2) // 栈2
+    {
+        if (S->top2 == STACK_MAXSIZE)
+            return STATUS_ERROR;
+        *e = S->elem[S->top2++];
+    }
+    return STATUS_OK;
+}

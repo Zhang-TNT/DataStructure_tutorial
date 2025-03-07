@@ -29,13 +29,26 @@ typedef struct _SqStack_dynamic
     int top;
 } SqStack_dynamic;
 
+/* link stack structure */
+typedef struct _StackNode
+{
+    ElemType data;
+    struct _StackNode *next;
+} StackNode, *LinkStackPtr;
+
+typedef struct _LinkStack
+{
+    LinkStackPtr top; // 栈顶
+    int count;        // 栈中元素个数
+} LinkStack;
+
 /* sharing sequence Stack structure */
 typedef struct _SqStack_shared
 {
     ElemType elem[STACK_MAXSIZE];
-    int top1;
-    int top2;
-} _SqStack_shared;
+    int top1; // top1指向第一个栈的栈顶，数组下标为-1
+    int top2; // top2指向第二个栈的栈顶，数组下标为STACK_MAXSIZE
+} SqStack_shared;
 
 /* function declare*/
 /* static stack operation*/
@@ -47,4 +60,9 @@ Status Stack_GetTop(SqStack S, ElemType *e);
 int Stack_Length(SqStack S);
 void Stack_Print(SqStack S);
 
+/* dynamic stack operation*/
+
+/* sharing stack operation*/
+Status SharingStack_Push(SqStack_shared *S, ElemType e, int stackNum);
+Status SharingStack_Pop(SqStack_shared *S, ElemType *e, int stackNum);
 #endif
