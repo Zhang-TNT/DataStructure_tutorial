@@ -1,7 +1,8 @@
 #include <stdio.h>
 // #include "SqList.h"
 // #include "FuncDemo.h"
-#include "Stack.h"
+// #include "Stack.h"
+#include "Queue.h"
 
 int main()
 {
@@ -74,7 +75,7 @@ int main()
     printf("temp = %d\n", temp);*/
 
     /* Stack */
-    printf("Stack\n");
+    /*printf("Stack\n");
     SqStack aStack;
     Stack_Init(&aStack);
     int alength = Stack_Length(aStack);
@@ -93,6 +94,48 @@ int main()
     Stack_GetTop(aStack, &temp);
     printf("temp = %d\n", temp);
     Stack_Clear(&aStack);
-    Stack_Print(aStack);
+    Stack_Print(aStack);*/
+    /* Queue */
+    /*printf("Queue\n");
+    SqQueue aQueue;
+    SqQueue_Init(&aQueue);
+    int alength = SqQueue_Length(aQueue);
+    printf("alength = %d\n", alength);
+    SqQueue_EnQueue(&aQueue, 1);
+    SqQueue_EnQueue(&aQueue, 2);
+    SqQueue_EnQueue(&aQueue, 3);
+    SqQueue_EnQueue(&aQueue, 4);
+    alength = SqQueue_Length(aQueue);
+    printf("alength = %d\n", alength);
+    SqQueue_Traverse(aQueue);
+    int temp = 0;
+    SqQueue_DeQueue(&aQueue, &temp);
+    printf("temp = %d\n", temp);
+    SqQueue_Traverse(aQueue);*/
+    /*printf("LkQueue with head node\n");
+    LkQueue aQueue;
+    LkQueue_withHead_Init(&aQueue);
+    LkQueue_withHead_EnQueue(&aQueue, 1);
+    LkQueue_withHead_EnQueue(&aQueue, 2);
+    LkQueue_withHead_EnQueue(&aQueue, 3);
+    LkQueue_withHead_EnQueue(&aQueue, 4);
+    LkQueue_withHead_Traverse(aQueue);
+    int temp = 0;
+    LkQueue_withHead_DeQueue(&aQueue, &temp);
+    printf("temp = %d\n", temp);
+    LkQueue_withHead_Traverse(aQueue);*/
+    printf("LkQueue without head node\n");
+    LkQueue aQueue;
+    LkQueue_withoutHead_Init(&aQueue);
+    LkQueue_withoutHead_EnQueue(&aQueue, 1);
+    LkQueue_withoutHead_EnQueue(&aQueue, 2);
+    LkQueue_withoutHead_EnQueue(&aQueue, 3);
+    LkQueue_withoutHead_EnQueue(&aQueue, 4);
+    LkQueue_withoutHead_Traverse(aQueue);
+    int temp = 0;
+    LkQueue_withoutHead_DeQueue(&aQueue, &temp);
+    printf("temp = %d\n", temp);
+    LkQueue_withoutHead_Traverse(aQueue);
+
     return 0;
 }

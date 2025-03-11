@@ -1629,27 +1629,631 @@ typedef struct _LNode
         }StackNode, *LinkStack;
         ```
         
+        + 初始化
         
+            顺序栈的初始化操作就是为顺序栈分配一块内存空间，将栈置为空。
+        
+            ```c
+            ```
+        
+            
 
 #### 3.3.2 栈的应用
 
-1. 栈
+> 在软件应用中，如浏览器网页的后退键，能返回之前所浏览的网页；还有编辑软件这撤销功能，可撤销上次操作。这些功能的实现都是通过**栈**这种数据结构实现。
 
-    在软件应用中，如浏览器网页的后退键，能返回之前所浏览的网页；还有编辑软件这撤销功能，可撤销上次操作。这些功能的实现都是通过**栈**这种数据结构实现。
+1. 递归
 
-2. 
+    将一个直接调用自己或通过一系列的调用语句间接地调用自己地函数，称作递归函数。
+
+    斐波那契数列案例，前面两项之和构成了后一项：$f(n)=f(n-1)+f(n-2)$，条件是$n=0$时有$f(n)=0$和$n=1$时有$f(n)=1$。递归实现代码如下
+
+    ```c
+    int Fbi(int n)
+    {
+        if(n < 2) return n == 0 ? 0 : 1;
+        return Fbi(n - 1) + Fbi(n - 2)
+    }
+    ```
+
+    在前行阶段，对于每一层递归，函数的局部变量、参数值以及返回地址都被压入栈中；退回阶段，位于栈顶的局部变量、参数值和返回地址被弹出，用于返回调用层次中执行代码的其余部分。
+
+    
+
+2. 四则运算表达式
+
+    不需要括号的后缀表达式，称作“逆波兰”；标准四则运算表达式称作“中缀表达式”。
 
 
 
 #### 3.3.3 队列
 
+> 
+
 1. 定义
 
     队列（queue）是一种先进先出（FIFO）的线性表，**限定仅在表的一端进行插入元素，而在另一端删除元素**，允许插入的一端称为**队尾**，允许删除的一端称为**队头**。队列的示意图如下所示
 
+    ![image-20250310220656453](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250310220656453.png)
+
+    
+
 2. 队列的抽象数据类型
+
+    基本操作还有队列的初始化、队列的长度、插入新元素。队列的抽象数据类型如下
+
+    ```c
+    ADT Queue{
+            数据对象：D = {ai|ai belong to ElemSet}
+        	数据关系：R = {<ai-1, ai>|ai-1, ai belong to D}
+        	基本操作：
+                InitQueue(&Q)：初始化
+                DestroyQueue(&Q)：销毁
+                ClearQueue(&Q)：清空
+                QueueEmpty(Q)：是否空栈
+                QueueLength(Q)：栈长度
+                GetHead(Q, *e)：读取队头元素
+                EnQueue(*Q, e)：插入尾部元素
+                DeQueue(*Q, *e)：删除队头元素
+                QueueTraverse(Q)：遍历栈
+    }ADT Queue
+    ```
+
+    
 
 3. 表示和实现
 
-#### 3.3.4 队列的应用
+    队列作为一种特殊线性表，同样存在两种存储方式
+
+    + 顺序队列
+
+        顺序队列的出队时间复杂度为$O(n)$，引入两个指针，队头`front`和队尾`rear`，入队时，队尾指针`rear`加1；出队时，队头指针`front`加1。为避免“假溢出”现象发生，引入**循环队列**，头尾相连的顺序存储结构。
+
+        ![image-20250311092814516](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311092814516.png)
+    
+        为判断队列是否满，定义条件`(rear - front + QueueSize) % QueueSize`。循环队列顺序结构代码实现如下
+    
+        ```c
+        typedef struct _SqQueue
+        {
+            ElemType data[MAXSIZE];
+            int front;
+            int rear;
+        }SqQueue;
+        ```
+
+        + 初始化
+    
+            静态分配一个大小为`MAXSIZE`的数组空间，头尾指针置为零，表示队列为空。
+    
+            ```c
+            Status SqQueue_Init(SqQueue *Q)
+            {
+                Q->front = 0;
+                Q->rear = 0;
+                return STATUS_OK;
+            }
+            ```
+    
+            
+    
+        + 入队
+    
+            判断队列是否满；在队尾插入一个新的元素；尾指针加1。
+    
+            ```c
+            Status SqQueue_EnQueue(SqQueue *Q, ElemType e)
+            {
+                if((Q->rear + 1) % QUEUE_MAXSIZE == Q->front)
+                    return STATUS_ERROR;
+                Q->elem[Q->rear] = e;                           // 将元素插入队尾
+                Q->rear = (Q->rear + 1) % QUEUE_MAXSIZE;         // 队尾指针向后移
+                return STATUS_OK;
+            }
+            ```
+    
+            
+    
+        + 出队
+    
+            判断队列是否为空；保存队头元素；头指针加1。
+    
+            ```c
+            Status SqQueue_DeQueue(SqQueue *Q, ElemType *e)
+            {
+                if(Q->front == Q->rear)
+                    return STATUS_ERROR;
+                *e = Q->elem[Q->front];                         // 读取队首元素
+                Q->front = (Q->front + 1) % QUEUE_MAXSIZE;       // 队首指针向后移
+                return STATUS_OK;
+            }
+            ```
+    
+            
+    
+        + 遍历
+    
+            从头指针开始，递增加1，只要不等于尾指针，即可完成遍历。
+    
+            ```c
+            void SqQueue_Traverse(SqQueue Q)
+            {
+                for (int i = Q.front; i != Q.rear; i = (i + 1) % QUEUE_MAXSIZE)
+                {
+                    printf("Queue.elem[%d] = %d ", i, Q.elem[i]);
+                }
+                printf("\n");
+            }
+            ```
+    
+            
+    
+    + 链式队列
+    
+        队列的顺序存储，算法时间性能不高，同时面临着溢出风险，引出链式队列，本质是特殊（尾进头出）的单链表。同链表结构，这里也分为带头结点和不带头结点两种结构。
+      
+      ![image-20250311095143089](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311095143089.png)
+      
+      链队列数据结构如下
+      
+      ```c
+      typedef struct _LkQueueNode
+      {
+          ElemType data;
+          struct _LkQueueNode *next;
+      } LkQueueNode;
+      
+      typedef struct _LkQueue
+      {
+          LkQueueNode *front; // 队首
+          LkQueueNode *rear;  // 队尾
+      } LkQueue;  // 链式队列
+      ```
+      
+      + 初始化
+      
+          带头结点和不带头结点初始化有所区别
+      
+          ```c
+          Status LkQueue_withHead_Init(LkQueue *Q)
+          {
+              Q->front = Q->rear = (LkQueueNode *)malloc(sizeof(LkQueueNode)); // 初始时队首指针和队尾指针指向头节点
+              if (Q->front == NULL)
+                  return STATUS_ERROR;
+              Q->front->next = NULL;  // 头节点的后继指针为空表示空队列
+              return STATUS_OK;
+          }
+          
+          Status LkQueue_withoutHead_Init(LkQueue *Q)
+          {
+              Q->front = Q->rear = NULL;  // 初始时队首指针和队尾指针指向空
+              return STATUS_OK;
+          }
+          ```
+      
+          
+      
+      + 入队
+      
+          带头结点链队列入队非常方便，不带头结点链队列则需考虑空队列情况
+      
+          ```c
+          Status LkQueue_withHead_EnQueue(LkQueue *Q, ElemType e)
+          {
+              LkQueueNode *p = (LkQueueNode *)malloc(sizeof(LkQueueNode)); // 申请新节点
+              if (p == NULL)
+                  return STATUS_ERROR;
+              p->data = e;
+              p->next = NULL;
+              Q->rear->next = p; // 将新节点插入到队尾
+              Q->rear = p;       // 队尾指针指向新节点
+              return STATUS_OK;
+          }
+          
+          Status LkQueue_withoutHead_EnQueue(LkQueue *Q, ElemType e)
+          {
+              LkQueueNode *p = (LkQueueNode *)malloc(sizeof(LkQueueNode)); // 申请新节点
+              if (p == NULL)
+                  return STATUS_ERROR;
+              p->data = e;
+              p->next = NULL;
+              if(Q->front == NULL)    // 队列为空
+                  Q->front = Q->rear = p;
+              else
+              {
+                  Q->rear->next = p; // 将新节点插入到队尾
+                  Q->rear = p;       // 队尾指针指向新节点
+              }
+              return STATUS_OK;
+          }
+          ```
+      
+          
+      
+      + 出队
+      
+          带头结点链队列出队非常方便，不带头结点链队列需要考虑空队列情况
+      
+          ```c
+          Status LkQueue_withHead_DeQueue(LkQueue *Q, ElemType *e)
+          {
+              if (Q->front == Q->rear) // 队列为空
+                  return STATUS_ERROR;
+              LkQueueNode *p = Q->front->next; // 新结点p指向队首元素
+              *e = p->data;                    // 读取队首元素
+              Q->front->next = p->next;        // 删除队首元素
+              if (Q->front->next == NULL)      // 队列为空
+                  Q->rear = Q->front;          // 队尾指针指向头节点
+              free(p);
+              return STATUS_OK;
+          }
+          
+          
+          Status LkQueue_withoutHead_DeQueue(LkQueue *Q, ElemType *e)
+          {
+              if(Q->front == NULL) // 队列为空
+                  return STATUS_ERROR;
+              LkQueueNode *p = Q->front; // 新结点p指向队首元素
+              *e = p->data;               // 读取队首元素
+              Q->front = p->next;         // 删除队首元素
+              if(Q->rear == p)            // 队列为空
+                  Q->front = Q->rear = NULL;
+              free(p);
+              return STATUS_OK;
+          }
+          ```
+      
+          
+      
+      + 遍历
+      
+          只需从头结点递增遍历到尾结点即可
+      
+          ```c
+          void LkQueue_withHead_Traverse(LkQueue Q)
+          {
+              LkQueueNode *p = Q.front->next;
+              int i = 0;
+              while(p != NULL)
+              {
+                  i++;
+                  printf("Queue.elem[%d] = %d ", i, p->data);
+                  p = p->next;
+              }
+              printf("\n");
+          }
+          
+          void LkQueue_withoutHead_Traverse(LkQueue Q)
+          {
+              LkQueueNode *p = Q.front;
+              int i = 0;
+              while(p != NULL)
+              {
+                  i++;
+                  printf("Queue.elem[%d] = %d ", i, p->data);
+                  p = p->next;
+              }
+              printf("\n");
+          }
+          ```
+
+#### 3.3.4 其他队列类型
+
+单端队列规定一端入队，一端出队；改变此规定可演化其他类型队列
+
++ 双端队列
+
+    ![image-20250311105707160](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311105707160.png)
+
++ 三段
+
+#### 3.3.5 案例分析与实现
+
+> 为加深栈与队列的理解，这里结合实际案例进行分析
+
++ 数制转换
+
+    将一个十进制整数N转换为八进制数时，需要把N与8求余得到各位依次进栈，高位在栈底，低位在栈顶；依次出栈即为八进制数
+
+    ```c
+    void conversion(int N)
+    {
+        while(N)
+        {
+            push(S, N % 8);
+            N = N / 8;			// 时间复杂度为log8(n)
+        }
+        while(!StackEmpty(S))
+        {
+            Pop(S, e);
+            printf(e);
+        }
+    }
+    ```
+
+    
+
++ 括号匹配检验
+
+    借助一个栈，每当读入一个左括号直接入栈；等待匹配的右括号将栈顶的左括号出栈。
+
+    
+
++ 舞伴问题
+
+    先入对的男士或女士先出队配成舞伴，男士和女士分别设置两个队列。
+
+
+
+### 3.4 串、数组和广义表
+
+#### 3.4.1 串的定义
+
+> 串（string）是一种特殊的线性表，其数据元素是一个字符
+
+串是由零个或多个字符组成的有限序列，又称**字符串**，用双引号表示。串的抽象数据类型
+
+```c
+ADT 串(string)
+Data
+串中元素仅由一个字符组成，相邻元素具有前驱和后继关系。
+Operation
+    StrAssign(T，*chars):生成一个其值等于字符串常量chars的串T。
+    StrCopy(T，S):串s存在，由串s复制得串T。
+    Clearstring(s):串S存在，将串清空。
+    StringEmpty(S):若串S为空，返回true，否则返回false。
+    strLength(s):返回串s的元素个数，即串的长度。
+    strCompare(S,T):若S>T,返回值>0,若S=T,返回0,若S<T,返回值<0。
+    Concat(T，S1，s2):用T返回由S1和S2联接而成的新串。
+    Substring(Sub,S,pos,len):串s存在,1≤pos≤strLength(s)，
+    月0≤len≤strLength(s)-pos+1，用Sub返回串s的第pos个字符起长度为1en的子串。
+    Index(S,T,pos):串S和T存在，T是非空串,1Spos≤strLength(s)。若主串s中存在和串T值相同的子串，则返回它在主串s中第pos个字符之后第一次出现的位置，否则返回0。
+    Replace(S,T,V):串S、T和V存在，T是非空串。用V替换主串s中出现的所有与T相等的不重叠的子串。
+    StrInsert(S,pos,T):串s和T在,1≤pos≤strLength(s)+1。在串s的第pos个字符之前插入串T。
+    StrDelete(s,pos,len):串s存在,1≤pos≤strLength(s)-len+1.从串s中删除第pos个字符起长度为 1en的子串。
+    
+endADT
+```
+
+#### 3.4.2 串的存储结构
+
+串作为一种特殊的线性表，有两种基本存储结构：顺序存储和链式存储
+
+1. 串的顺序存储结构
+
+    用一组地址连续的存储单元来存储串中的字符序列，一般将实际串长度值保存在数组的0下标位置。
+
+    ![image-20250311111729895](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311111729895.png)
+
+    
+
+2. 串的链式存储结构
+
+    顺序串的插入和删除操作不方便，同时有溢出风险。引出链式串，每个结点即可存放一个字符，也可存放多个字符。
+
+    ![image-20250311113724556](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311113724556.png)
+
+    链式串存储结构如下
+
+    ```c
+    typedef struct _LStringNode
+    {
+        ElemType data;
+        struct _LStringNode *next;
+    } LStringNode, *LString;
+    
+    typedef struct _LStringNode1
+    {
+        ElemType data[4];
+        struct _LStringNode1 *next;
+    } LStringNode1, *LString1;
+    ```
+
+    
+
+#### 3.4.3 模式匹配算法
+
+子串的定位运算称作**串的模式匹配**，一定在主串中存在的才叫“子串”。著名的模式匹配算法有BF算法和KMP算法
+
+1. BF
+
+     不一定是从主串第一个位置开始，可以指定主串中查找的起始位置`pos`，算法步骤如下
+
+    + 利用计数指针`i`和`j`分别指示主串`S`和模式`T`中当前正待比较的字符位置，`i`初值为`pos`，`j`初值为1；
+    + 如果两个串均未比较到串尾，即`i`和`j`均分别小于等于`S`和`T`的长度时，循环执行以下操作
+        + `S[i].ch`和`T[i].ch`比较，相等则比较后续字符
+        + 不等，则指针后退重新开始匹配，从主串下一个字符起重新和模式的第一个字符比较
+    + 如果`j>T.length`，说明模式`T`中的每个字符依次和主串`S`中的一个连续的字符序列相等，则匹配成功，返回和模式`T`中第一个字符相等的字符在主串`S`中的序号；不成功，返回0。
+
+    主串`S="ababcabcacbab"`，模式`T="abcac"`的BF算法匹配流程如下
+
+    ![image-20250311171723850](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311171723850.png)
+
+2. KMP
+
+    朴素模式匹配算法低效，KMP算法可大大避免重复遍历的情况。每趟匹配过程中出现字符比较不等时，不需回溯`i`指针，而是利用已经得到的“部分匹配”的结果将模式向右“滑动”尽可能多的一段距离后，继续进行比较。KMP算法匹配流程如下
+
+    ![image-20250311172454977](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311172454977.png)
+
+    在第一趟匹配中出现字符不等时，仅需将模式向右移动两个字符的位置继续进行`i=3`、`j=1`时的字符比较。
+
+#### 3.4.4 数组
+
+> 数组是由类型相同的数据元素构成的有序集合，矩阵可用二维数组来表示。但对于高阶矩阵，以及很多值相同的元素时，为节省存储空间，采取压缩存储。
+
++ 堆成矩阵
+
+    $n$阶矩阵元素满足$a_{ij}=a_{ji}$，可将$n^2$个元素压缩至$n\cdot (n+1)/2$个。
+
++ 三角矩阵
+
+    $n$阶矩阵上三角/下三角元素为常数或0，只需存储不同元素的三角部分，再加一个存储常数的空间。
+
++ 对角矩阵
+
+    非零元素都集中在以主对角线为中心的带状区域中，其余元素皆为零。
+
+#### 3.4.5 广义表
+
+> 广义表是线性表的推广，也称列表。
+
+广义表一般记作：$LS=(a_1, a_2,...,a_n)$，有以下3个结论
+
++ 广义表的元素可以是子表，子表的元素还可以是子表
++ 广义表可为其他广义表所共享
++ 广义表可以是一个递归的表
+
+广义表通常采用链式存储结构，有两种
+
+1. 头尾链表的存储结构
+
+    
+
+2. 扩展线性链表的存储结构
+
+### 3.5  树
+
+#### 3.5.1 定义
+
+**树**是$n$个结点的有限集，或为空树，或为非空树。树是一种一对多的数据结构，在任意一颗非空树中
+
++ 有且仅有一个特定的称为根的结点
++ 其余结点（$n>1$）可分为$m$个互不相交的有限集，每个集合本身又是一棵树，称为根的子树
+
+![image-20250311204117855](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311204117855.png)
+
+注意：**根**唯一，子树的个数没有限制，但它们一定是互不相交的。
+
+基本术语
+
++ 结点
+
+    树中的一个独立单元
+
++ 结点的度
+
+    结点拥有的子树数称为结点的度
+
++ 树的度
+
+    各结点度的最大值
+
++ 叶子
+
+    度为0的结点称为叶子或终端结点
+
++ 非终端结点
+
+    度不为0的结点称为非终端结点或分支结点
+
++ 双亲和孩子
+
+    节点的子树的根称为该节点的孩子，该节点称为孩子的双亲
+
++ 兄弟
+
+    同一个双亲的孩子之间互称兄弟
+
++ 祖先
+
+    从根到该节点所经分支上的**所有结点**
+
++ 子孙
+
+    以某结点为根的子树中的任一结点称为该结点的子孙
+
++ 层次
+
+    结点的层次从根开始定义起，根为第一层
+
++ 堂兄弟
+
+    双亲在同一层的结点互为堂兄弟
+
++ 树的深度
+
+    树中结点最大层次称为树的高度
+
++ 有序树和无序树
+
+    将树中结点的各子树看成从左至右是有次序的，称有序树；否则称无序树。
+
++ 森林
+
+    有$m$棵互不相同的树的集合，对树中每个结点而言，子树的集合称为森林。
+
+对比线性表和树的结构，二者有很大不同，对比如下所示
+
+![image-20250311220125001](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311220125001.png)
+
+根据树的结构定义，加上树的一组基本操作构成树的抽象数据类型
+
+```c
+ADT Tree{
+数据对象 D:D是具有相同特性的数据元素的集合。
+数据关系 R:若D为空集，则称为空树;
+    若D仅含一个数据元素，则R为空集，否则R={H}，H是如下二元关系:
+    (1)在口中存在唯一的称为根的数据元素root，它在关系 H下无前驱;
+    (2)若D-{root}≠中，则存在D-{root}的一个划分D，D2，…，Dm(m>0)，对任意j≠k(1≤j，k≤m)有D;nDk =Φ，且对任意的i(1≤i≤m)，唯一存在数据元素X;∈D;，有<root,x:>eH;
+    (3)对应于D-{root}的划分，H-{<root,x>，…，<root,x>=有唯一的一个划分H，H2，…
+    H(m>0)，对任意j≠k(1≤j，k≤m)有HnHk-φ，且对任意i(1≤i≤m),H;是D,上的二元关系，(D:，{Hi})是一棵符合本定义的树，称为根 root 的子树。
+基本操作 P:
+    InitTree(&T)
+    操作结果:构造空树 T。
+    DestroyTree(&T)
+    初始条件:树T存在。
+    操作结果:销毁树 T。
+    CreateTree(sT,definition)
+    初始条件:definition 给出树T的定义。
+    操作结果:按 definition 构造树 T。
+    ClearTree(&T)
+    初始条件:树T存在。
+    操作结果:将树T清为空树。
+    TreeEmpty(T)
+    初始条件:树T存在。
+    操作结果:若T为空树，则返回true，否则false。
+    TreeDepth(T)
+    初始条件:树T存在。
+    操作结果:返回T的深度。
+    Root(T)
+    初始条件:树T存在。
+    操作结果:返回T的根。
+    Value(T,cur e)
+    初始条件:树T存在，cure是T中某个结点。
+    操作结果:返回cur e的值。
+    Assiqn(T,cur e,value)
+    初始条件:树T存在，cure是T中某个结点。
+    操作结果:结点 cur e赋值为 value。
+    Parent(T,cur e)i
+    初始条件:树T存在，cure是T中某个结点。
+    操作结果:若cure是T的非根结点，则返回它的双亲，否则函数值为“空”。
+    LeftChild(T,cur e)
+    初始条件:树存在，cure是T中某个结点。
+    操作结果:若cure是T的非叶子结点，则返回它的最左孩子，否则返回“空”。
+    RightSibling(T,cur e)
+    初始条件:树T存在，cur_e是T中某个结点。
+    操作结果:若cur_e有右兄弟，则返回它的右兄弟，否则兩数值为“空”。
+    InsertChild(&T,p，i,c)
+    初始条件:树T存在，p指向T中某个结点，1≤i≤p所指结点的度+1，非空树c与T不相交。
+    操作结果:插人c为T中p指结点的第i棵子树。
+    DeleteChild(&T，p，i)
+    初始条件:树T存在，p指向T中某个结点，1≤i≤p指结点的度。
+    操作结果:删除T中p所指结点的第i棵子树。
+    TraverseTree(T)
+    初始条件:树T存在。
+    操作结果:按某种次序对T的每个结点访问一次。
+}ADT Tree
+```
+
+#### 3.5.2 树的存储结构
+
++ 双亲表示法
++ 孩子表示法
++ 孩子兄弟表示法
+
+### 3.6 图
+
+### 3.7 查找
+
+### 3.8 排序
 

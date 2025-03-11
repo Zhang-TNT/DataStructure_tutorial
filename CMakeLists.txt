@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(DataStructure_tutorial
     VERSION 1.0.0
@@ -12,7 +12,8 @@ set(SRC_FILES
     ${PROJECT_SOURCE_DIR}/main.c
     ${PROJECT_SOURCE_DIR}/src/SqList.c
     ${PROJECT_SOURCE_DIR}/src/FuncDemo.c
-    ${PROJECT_SOURCE_DIR}/src/Stack.c)
+    ${PROJECT_SOURCE_DIR}/src/Stack.c
+    ${PROJECT_SOURCE_DIR}/src/Queue.c)
 
 
 # aux_source_directory(. DIR_SRCS)
