@@ -13,7 +13,8 @@ set(SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/SqList.c
     ${PROJECT_SOURCE_DIR}/src/FuncDemo.c
     ${PROJECT_SOURCE_DIR}/src/Stack.c
-    ${PROJECT_SOURCE_DIR}/src/Queue.c)
+    ${PROJECT_SOURCE_DIR}/src/Queue.c
+    ${PROJECT_SOURCE_DIR}/src/Tree.c)
 
 
 # aux_source_directory(. DIR_SRCS)

@@ -2115,14 +2115,14 @@ endADT
 
 #### 3.5.1 定义
 
-**树**是$n$个结点的有限集，或为空树，或为非空树。树是一种一对多的数据结构，在任意一颗非空树中
+**树**是$n$个结点的有限集，或为空树，或为非空树。树是一种递归定义的数据结构。树是一种一对多的数据结构，在任意一颗非空树中
 
 + 有且仅有一个特定的称为根的结点
 + 其余结点（$n>1$）可分为$m$个互不相交的有限集，每个集合本身又是一棵树，称为根的子树
 
 ![image-20250311204117855](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250311204117855.png)
 
-注意：**根**唯一，子树的个数没有限制，但它们一定是互不相交的。
+注意：**根**唯一，子树的个数没有限制，但它们一定是互不相交的；除了根节点，任一个结点都有且仅有一个前驱，可有0个或多个后继。
 
 基本术语
 
@@ -2248,10 +2248,499 @@ ADT Tree{
 #### 3.5.2 树的存储结构
 
 + 双亲表示法
+
+    每个结点不一定有孩子，但是一定有且仅有一个双亲。以一组连续空间（顺序结构）存储树的结点，**在每个结点中，附设一个指示器指示其双亲结点在数组中的位置**。类似链表结点，双亲表示法定义代码表示如下
+
+    ```c
+    typedef int ElemType;
+    
+    typedef struct _PTNode
+    {
+        ElemType data;  // 结点数据
+        int parent;     // 双亲位置
+    }PTNode;// 结点结构
+    
+    typedef struct _PTree
+    {
+        PTNode nodes[MAX_TREE_SIZE];    // 结点数组，下标从0开始
+        int rootPos, nodeNum;           // 根的位置和结点数
+    }PTree;
+    ```
+
+    案例，将下图中的树结构用树双亲表示
+
+    ![image-20250312102310455](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312102310455.png)
+
+    将其结构图和逻辑关系绘制成表格，结果如下图所示
+
+    ![image-20250312102407510](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312102407510.png)
+
+    这样可以根据`parent`指针很容易找到其双亲，但是要找到孩子必须遍历才行，可以增加一个结点（称**长子域**，最左边的孩子），如下表所示
+
+    ![image-20250312103428631](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312103428631.png)
+
+    若要关注兄弟之间的关系，双亲表示法无法体现这样的关系，需要增加一个结点（称**次子域**，最右边的孩子），如下表所示
+
+    ![image-20250312104011333](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312104011333.png)
+
+    要关注什么关系，设计对应的存储结构，保证时间复杂度最小。
+
 + 孩子表示法
+
+    由于树中每个结点可能有多颗子树，可考虑多重链表，**每个结点有多个指针域，其中每个指针指向一颗子树的根结点**。有两种方案
+
+    1. 方案一
+
+        指针域的个数等于树的度（指向该节点的孩子），结构如下所示
+
+        ![image-20250312104603008](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312104603008.png)
+
+        案例表示如下图所示
+
+        ![image-20250312104804132](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312104804132.png)
+
+        对于各结点的度相差很大时，会很浪费空间，存在空指针域。
+
+    2. 方案二
+
+        指针域的个数等于该节点的度，专门取一个位置存储结点指针域的个数，结构如下表所示
+
+        ![image-20250312105609743](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312105609743.png)
+
+        结点包含，数据域、度域和指针域。案例实现如下
+
+        ![image-20250312105716262](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312105716262.png)
+
+        这种结构克服了空间上的浪费，但是要维护结点的度的数值，在运算上带来时间上的损耗。
+
+    把每个结点放在一个顺序存储结构的数组中是合理的，但每个结点的孩子有多少未知，因此需要再对每个结点的孩子建立一个单链表体现它们的关系。把每个结点的孩子结点排列起来，以单链表作存储结构，头指针组成一个线性表，存进一个一维数组中。如下图所示
+
+    ![image-20250312110245966](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312110245966.png)
+
+    为此需要设计两种结点结构，一个是孩子链表的孩子结点，存放孩子；另一个是表头数组的表头结点，存放数据。代码实现如下
+
+    ```c
+    typedef struct _CTNode
+    {
+        int child;
+        struct _CTNode *next;
+    }CTNode, *ChildPtr; // 孩子结点
+    
+    typedef struct _CTBox
+    {
+        ElemType data;
+        ChildPtr firstchild;
+    }CTBox; // 结点结构
+    
+    typedef struct _CTree
+    {
+        CTBox nodes[MAX_TREE_SIZE];     // 结点数组，下标从0开始
+        int rootPos, nodeNum;           // 根的位置和结点数
+    }CTree; // 树结构
+    ```
+
+    但是这种方法无法知道双亲是谁，可增加一个双亲域。如下图所示
+
+    ![image-20250312111614490](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312111614490.png)
+
 + 孩子兄弟表示法
 
+    任一棵树，其结点的第一个孩子如果存在就是唯一的，右兄弟如果存在也是唯一的，设置两个指针，分别指向该结点的第一个孩子和此结点的右兄弟。结点结构如下表所示
+
+    ![image-20250312112641337](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312112641337.png)
+
+    结构定义代码如下所示
+
+    ```c
+    typedef struct _CSNode
+    {
+        ElemType data;
+        struct _CSNode *firstchild, *nextSibling;
+    }CSNode, *CSTree; // 孩子结点
+    ```
+
+    案例示意图如下图所示
+
+    ![image-20250312112944861](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312112944861.png)
+
+    当然，要找到某个结点的双亲，需要再增加一个双亲域。
+
+#### 3.5.3 二叉树
+
+**二叉树**是$n$个结点所构成的集合，或为空树，或为非空树。对于非空树$T$满足
+
++ 有且仅有一个称之为根的结点
++ 除根结点以外的其余结点分为两个互不相交的子集$T_1$和$T_2$（次序不能任意颠倒），分别成为$T4$的左子树和右子树，且$T_1$和$T_2$本身又都是二叉树
+
+二叉树可以有5种基本形态，如下图所示
+
+![image-20250312113741224](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312113741224.png)
+
+在了解完二叉树定义后，介绍一些特殊的二叉树
+
++ 斜树
+
+    所有结点都只有左子树的二叉树称作**左斜树**；所有结点都只有右子树的二叉树称作**右斜树**。斜树每一层都只有一个结点，结点的个数与二叉树的深度相同，本质上线性表是树的一种特殊表现形式。
+
++ 满二叉树
+
+    所有分支结点都存在左子树和右子树，并且所有叶子都在同一层上，成这样的二叉树为**满二叉树**。
+
+    特点如下
+
+    + 叶子只能出现在最下一层
+    + 非叶子结点的度一定是2
+    + 在同样深度的二叉树中，满二叉树的结点个数最多
+
++ 完全二叉树
+
+    对一颗具有$n$个结点的二叉树按层序编号，**编号为$i$的结点与同样深度的满二叉树中编号为$i$的结点在二叉树中位置完全相同**，则这棵二叉树称为完全二叉树。
+
+    特定如下
+
+    + 叶子结点只能出现在最下两层
+    + 最下层叶子一定集中在左部连续位置
+    + 倒数两层，若有叶子结点，一定都在右部连续位置
+    + 如果结点度为1，则该结点只有左孩子
+    + 同样结点数的二叉树，完全二叉树深度最小
+
+#### 3.5.4 二叉树的性质
+
+1. 性质1
+
+    在二叉树的第$i$层**至多**有$2^{i-1}$个结点
+
+2. 性质2
+
+    深度为$K$的二叉树**至多**有$2^K-1$个结点
+
+3. 性质3
+
+    对任一颗二叉树$T$，如果其终端结点数为$n_0$，度为2的结点数为$n_2$，则有$n_0=n_2+1$。
+
+4. 性质4
+
+    具有$n$个结点的完全二叉树深度为$[log_2n]+1$（$[x]$表示不大于$x$的最大整数）
+
+5. 性质5
+
+    对一颗有$n$个结点的完全二叉树的结点按层序编号，对任一结点$j$有
+
+    + $j=1$，结点$j$是二叉树的根，无双亲；$j>1$，双亲是结点$[j/2]$
+    + $2j>n$，则结点$j$无左孩子；否则其左孩子是结点$2i$
+    + $2j+1>n$，则结点$j$无右孩子；否则其右孩子是结点$2j+1$
+
+#### 3.5.5 二叉树的存储结构
+
+二叉树也可采用顺序存储和链式存储两种方式
+
+1. 顺序存储
+
+    用一维数组存储二叉树中的结点，并且结点的存储位置就是数组下标要能体现结点之间的逻辑关系。一颗完全二叉树如下图
+
+    ![image-20250312142639053](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312142639053.png)
+
+    该树在数组中的位置如下图所示
+
+    ![image-20250312142714561](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312142714561.png)
+
+    可以看出树的逻辑关系与性质5完全对应。对于一般二叉树，必须将其按完全二叉树编号，不存在的结点设置为$\wedge$，如下图所示
+
+    ![image-20250312144522389](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312144522389.png)
+
+    
+
+2. 链式存储
+
+    由于顺序结构对于一般二叉树会造成存储空间的极大浪费，因此一般二叉树更适合链式存储结构。设计一个包含一个数据域和两个指针域的结点，有此类结点组成的链表称之为**二叉链表**。结构示意图如下
+
+    ![image-20250312144840735](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312144840735.png)
+
+    结点定义代码如下
+
+    ```c
+    typedef struct _BiTNode
+    {
+        ElemType data;
+        struct _BiTNode *lchild, *rchild;   // 左右孩子指针
+    }BiTNode, *BiTree;
+    ```
+
+    上述结构对于查找孩子十分方便，但要找到双亲结点，则只能从根开始遍历寻找，可添加一个双亲域，组成三叉链表
+
+    ```c
+    typedef struct _BiTNode
+    {
+        ElemType data;
+        struct _BiTNode *lchild, *rchild, *parent;   // 左右孩子指针，双亲指针
+    }BiTNode, *BiTree;
+    ```
+
+#### 3.5.6 遍历二叉树
+
+二叉树的遍历是指从根结点出发，按照某种次序依次访问二叉树中的所有结点，使得每个结点被访问依次且仅被访问一次。二叉树主要分以下四种
+
++ 前序遍历
+
+    若二叉树为空，则空操作返回；否则先访问根结点，然后前序遍历左子树，再前序遍历右子树。示意图如下
+
+    ![image-20250312151804389](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312151804389.png)
+
+    实现代码如下
+
+    ```c
+    void PreOrderTraverse(BiTree T)
+    {
+        if(T == NULL) return;
+        printf("data: %d\n", T->data);
+        PreOrderTraverse(T->lchild);    // 先序遍历左子树
+        PreOrderTraverse(T->rchild);    // 先序遍历右子树
+    }
+    ```
+
+    
+
++ 中序遍历
+
+    若二叉树为空，则空操作返回；否则从根结点开始，中序遍历根结点的左子树，然后是访问根结点，最后中序遍历右子树。示意图如下
+
+    ![image-20250312151919702](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312151919702.png)
+
+    实现代码如下
+
+    ```c
+    void InOrderTraverse(BiTree T)
+    {
+        if(T == NULL) return;
+        InOrderTraverse(T->lchild);     // 中序遍历左子树
+        printf("data: %d\n", T->data);
+        InOrderTraverse(T->rchild);     // 中序遍历右子树
+    }
+    ```
+
+    
+
++ 后序遍历
+
+    若二叉树为空，则空操作返回；否则从左到右先叶子后结点的方式遍历访问左右子树，最后是访问根结点。示意图如下
+
+    ![image-20250312152018274](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312152018274.png)
+
+    实现代码如下
+
+    ```c
+    void PostOrderTraverse(BiTree T)
+    {
+        if(T == NULL) return;
+        PostOrderTraverse(T->lchild);   // 后序遍历左子树
+        PostOrderTraverse(T->rchild);   // 后序遍历右子树
+        printf("data: %d\n", T->data);
+    }
+    ```
+
+    
+
++ 层序遍历
+
+    若二叉树为空，则空操作返回；否则从树的第一层，也就是根结点开始访问，从上而下逐层遍历，在同一层中，按从左到右的顺序对结点逐个访问。示意图如下
+
+    ![image-20250312152150087](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312152150087.png)
+
+    代码实现如下
+
+    ```c
+    /*
+     - 初始化一个辅助队列
+     - 根结点入队
+     - 若队列非空，则队头结点出队，访问该结点，并将其左、右孩子插入队尾
+     - 重复第三步操作直至队空
+    */
+    void LevelOrderTraverse(BiTree T)
+    {
+        LinkQueue Q;
+        InitQueue(Q);
+        BiTree p;
+        EnQueue(Q, T);
+        while(!IsEmpty(Q))
+        {
+            DeQueue(Q, p);
+            visit(p);
+            if(p->lchild != NULL) EnQueue(Q, p->lchild);
+            if(p->rchild != NULL) EnQueue(Q, p->rchild);
+        }
+    
+    }
+    ```
+
+    
+
+#### 3.5.7 二叉树的构造和线索二叉树
+
+若只给出一颗二叉树的前/中/后/层序遍历序列中的一种，不能唯一确定一颗二叉树。
+
+```c
+void CreateBiTree(BiTree *T)
+{
+    ElemType data1;
+    *T = (BiTree)malloc(sizeof(BiTree));
+    CreateBiTree(&(*T)->lchild);
+    CreateBiTree(&(*T)->rchild);
+}
+```
+
+遍历二叉树实质上是对一个非线性结构进行线性化操作，使每个结点在这些线性序列中有且仅有一个直接前驱和直接后继。引入线索二叉树来保存这些在动态过程中得到的有关前驱和后继的信息，在每个结点在增设两个标志域`ltag`和`rtag`，这两个标志与只存放0或1。结点结构如下表所示
+
+![image-20250312162251591](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312162251591.png)
+
+案例示意图如下
+
+![image-20250312162342014](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312162342014.png)
+
+实现代码如下
+
+```c
+typedef enum _PointerTag
+{
+    Link,
+    Thread
+}PointerTag;
+
+typedef struct _BiThrNode
+{
+    ElemType data;
+    struct _BiThrNode *lchild, *rchild;
+    PointerTag LTag;
+    PointerTag RTag;
+}BiThrNode, *BiThrTree;
+```
+
+线索化的实质就是将二叉链表中的空指针改为指向前驱或后继的线索，**线索化的过程就是在便利的过程中修改空指针的过程**。
+
+#### 3.5.8 树、森林
+
+1. 树转换为二叉树
+
+    树结构如下图所示
+
+    ![image-20250312163321107](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312163321107.png)
+
+    + 加线，在所有兄弟结点之间加一条连线
+
+        ![image-20250312163459445](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312163459445.png)
+
+    + 去线，对树中每个结点，只保留其与第一个孩子结点的连线，删除其与其他孩子结点之间的连线
+
+        ![image-20250312163542987](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312163542987.png)
+
+    + 层次调整，以树的根结点为轴心，将整棵树顺时针旋转一定角度，使之结构层次分明
+
+        ![image-20250312164353479](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312164353479.png)
+
+2. 森林转换为二叉树
+
+    森林是由若干棵树组成，森林中的每一棵树都是兄弟，可以按照兄弟的处理方法操作。森林结构如下
+
+    ![image-20250312164525900](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312164525900.png)
+
+    + 把每棵树转换为二叉树
+
+        ![image-20250312164658690](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312164658690.png)
+
+    + 第一颗二叉树不动，从第二课二叉树开始，依次把后一颗二叉树的根结点作为前一棵二叉树的根结点的右孩子，用线连接起来。
+
+        ![image-20250312164716990](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312164716990.png)
+
+3. 二叉树转换为树
+
+    二叉树转换为树是树转换为二叉树的逆过程。二叉树如下
+
+    ![image-20250312164905504](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312164905504.png)
+
+    + 加线，若某结点的左孩子结点存在，则将这个左孩子的有孩子结点、右孩子的右孩子结点、右孩子的右孩子的右孩子结点...，就是左孩子的$n$个右孩子结点都作为此结点的孩子。将该结点与这些右孩子结点用线连接起来。
+
+        ![image-20250312165209925](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165209925.png)
+
+    + 去线，删除原二叉树中所有结点与其右孩子结点的连线。
+
+        ![image-20250312165510795](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165510795.png)
+
+4. 二叉树转换为森林
+
+    判断一颗二叉树能转换为一棵树还是森林，就是要看这棵二叉树的根结点有没有右孩子，有就是森林，没有就是一棵树。
+
+    ![image-20250312165709901](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165709901.png)
+
+    + 从根结点开始，若右孩子存在，则把右孩子结点的连线删除
+
+        ![image-20250312165833217](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165833217.png)
+
+    + 再查看分离后的二叉树，若右孩子存在，则连线删除，直到所有右孩子连线都删除为止
+
+        ![image-20250312165843891](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165843891.png)
+
+    + 再将每颗分离后的二叉树转换为树即可
+
+        ![image-20250312165942891](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312165942891.png)
+
+#### 3.5.9 哈夫曼树
+
+1. 定义
+
+    **哈夫曼树**又称最优树，是一类带权路径长度最短的树。给出如下概念定义
+
+    + 路径：从树中的一个结点到另一个结点之间的分支构成这两个结点之间的路径
+    + 路径长度：路径上的分支数目称作路径长度
+    + 树的路径长度：从树根到每一结点的路径长度之和
+    + 权：赋予某个实体的一个量，是对实体的某个或某些属性的数值化描述
+    + 结点的带权路径长度：从该结点到树根之间的路径长度与结点上权的乘积
+    + 树的带权路径长度：树中所有叶子结点的带权路径长度之和，常记作$WPL=\sum_k^nw_kl_k$
+    + 哈夫曼树：假设有$m$个权值，可构造一颗含$n$个叶子结点的二叉树，每个叶子结点的权为$w_1$，则其中带权路径长度$WPL$最小的二叉000000树称作最优二叉树或哈夫曼树。
+
+2. 构造算法
+
+    二叉树结构如下
+
+    ![image-20250312173113206](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312173113206.png)
+
+    + 先把有权值的叶子结点按照从小到大的顺序排列成一个有序序列
+
+    + 取头两个最小权值的结点作为一个新结点$N_1$的两个子结点，较小的是左孩子
+
+        ![image-20250312173331233](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312173331233.png)
+
+    + 将$N_1$替换$A$与$E$，插入有序序列中，保持从小到大排列
+
+    + 重复步骤2，将$N_1$与B作为一个新结点$N_2$的两个子结点
+
+        ![image-20250312173430821](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312173430821.png)
+
+    + 将$N_2$替换$N_1$和B，插入有序序列中，保持从小到大排列
+
+    + 重复步骤2，将$N_2$与D作为一个新结点$N_3$的两个子结点
+
+        ![image-20250312205740108](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312205740108.png)
+
+    + 将$N_3$替换$N_2$与D，插入有序序列中，保持从小到大排列
+
+    + 重复步骤2，将$N_3$和C作为一个新结点T的两个子结点
+
+        ![image-20250312205944794](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312205944794.png)
+
+    构造哈夫曼树的哈夫曼算法可总结如下
+
+    ![image-20250312210203055](https://cdn.jsdelivr.net/gh/Zhang-TNT/markdown-imgs@main/imgs/image-20250312210203055.png)
+
+    
+
+3. 应用
+
+    哈夫曼编码进行数据压缩
+
 ### 3.6 图
+
+#### 3.6.1 定义
+
+图是由顶点的有穷非空集合和顶点之间边的集合组成的，通常表示为G，V是图G中顶点的集合，E是图G中边的集合。
 
 ### 3.7 查找
 
