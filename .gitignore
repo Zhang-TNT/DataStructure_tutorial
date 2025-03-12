@@ -59,4 +59,4 @@ dkms.conf
 /pics
 
 # setting
-/.vscode
+.vscode/
